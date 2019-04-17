@@ -1,0 +1,24 @@
+1. 
+  uintptr_t
+2.
+  0号物理页标记为已使用，不在free_page_list中，因此未来不会存入页表；
+  1~159号物理页可用，可被申请；
+  160~255号物理页不可用，用于IO；
+  256~348号物理页用于存放kernel数据；
+  349~32767号物理页可用，可被申请。
+  已经不可用的物理页部分被boot_map_region映射到虚拟地址空间：
+  在page directory的956号入口存放了包含虚拟地址UPAGES的page table的基地址；
+  957号入口存放了包含虚拟地址UVPT的page table的基地址；
+  959号入口存放了包含[KSTACKTOP-KSTKSIZE, KSTACKTOP)的page table的基地址；
+  960~1023号都存放了page table基地址，它们负责映射到0~256MB的物理地址。
+3.
+  通过设置页的访问权限，kernel only的物理页没有PTE_U权限，不可被用户态读写
+4.
+  32768页，128M，npages的值为32768，它代表物理页数
+5.
+  需要1个page的page directory，64个pages保存page info，还要动态申请page做page table
+6.
+  mov	$relocated, %eax；jmp	*%eax
+  由于初始4M页表的映射关系，kernbase以上4M区间映射到物理地址0以上4M区间，所以eip虽然
+  没变，但和变了有相同效果
+  跳转到高地址后就可以进入kernel态，使用虚拟地址来创建页表对用户态屏蔽一些数据
